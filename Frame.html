@@ -7,26 +7,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(120deg, white, #e6e6fa); /* Lighter purple */
+            background: linear-gradient(120deg, #ffffff, #dcd0ff);
         }
         .container {
-            width: 90%;
+            width: 100%;
+            max-width: 1200px;
+            height: 100vh;
             display: grid;
             grid-template-columns: 3fr 1fr;
             gap: 20px;
             padding: 20px;
-            background-color: #f8f8f8;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 8px;
+            overflow: hidden;
         }
         .content {
             padding: 20px;
-            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
         .videos {
             display: flex;
@@ -34,14 +42,25 @@
             gap: 20px;
         }
         .video {
-            height: 200px;
+            flex: 1;
             background-color: black;
-            color: white;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 8px;
-            overflow: hidden;
+            color: white;
+            position: relative; /* for positioning labels and controls */
+        }
+        .video label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+        }
+        input[type="file"] {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.7;
         }
         button {
             background-color: black;
@@ -50,9 +69,6 @@
             padding: 10px 20px;
             cursor: pointer;
             margin-top: 20px;
-        }
-        input[type="file"] {
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -64,26 +80,28 @@
             <button>Explore</button>
         </div>
         <div class="videos">
-            <div class="video" id="outboundAnimation">Outbound AI Agent Conversation Animation</div>
-            <input type="file" id="outboundFile" accept="audio/*">
-            <div class="video" id="inboundAnimation">Inbound AI Agent Conversation Animation</div>
-            <input type="file" id="inboundFile" accept="audio/*">
+            <div class="video" id="outboundAnimation">
+                <label>Outbound AI Agent Conversation</label>
+                <input type="file" id="outboundFile" accept="audio/*">
+            </div>
+            <div class="video" id="inboundAnimation">
+                <label>Inbound AI Agent Conversation</label>
+                <input type="file" id="inboundFile" accept="audio/*">
+            </div>
         </div>
     </div>
 
     <script>
+        let outboundAnalyzer, inboundAnalyzer;
+
         function setup() {
             let outboundCanvas = createCanvas(240, 200).parent('outboundAnimation');
-            let outboundAnalyzer = new p5.Amplitude();
+            outboundAnalyzer = new p5.Amplitude();
             setupAudio('outboundFile', outboundAnalyzer, outboundCanvas);
 
             let inboundCanvas = createCanvas(240, 200).parent('inboundAnimation');
-            let inboundAnalyzer = new p5.Amplitude();
+            inboundAnalyzer = new p5.Amplitude();
             setupAudio('inboundFile', inboundAnalyzer, inboundCanvas);
-        }
-
-        function draw() {
-            // This function will draw visualizations but is kept empty for simplicity now
         }
 
         function setupAudio(fileInputId, analyzer, canvas) {
@@ -101,13 +119,4 @@
 
         function drawVisualization(analyzer, canvas) {
             canvas.draw = function() {
-                let volume = analyzer.getLevel();
-                this.background(50);
-                this.fill(255, 0, 0);
-                let h = this.map(volume, 0, 1, 0, this.height);
-                this.rect(this.width / 2 - 50, this.height - h, 100, h);
-            }
-        }
-    </script>
-</body>
-</html>
+               
