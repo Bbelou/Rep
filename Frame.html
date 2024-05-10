@@ -14,7 +14,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(120deg, #ffffff, #dcd0ff); /* Soft white to light purple gradient */
+            background: linear-gradient(to top, #ffffff 0%, #dcd0ff 100%);
         }
         .container {
             width: 100%;
@@ -35,6 +35,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
+            color: black; /* Ensuring text color is visible against light background */
         }
         .videos {
             display: flex;
@@ -43,26 +44,21 @@
         }
         .video {
             flex: 1;
-            background-color: #222;
+            background: linear-gradient(to bottom, #dcd0ff 0%, #ffffff 100%);
             color: white;
             position: relative;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
             border-radius: 8px;
             overflow: hidden;
             padding: 10px;
         }
-        .video canvas {
-            width: 100% !important;
-            height: auto !important;
-        }
         .controls {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
             display: flex;
             gap: 10px;
+            margin-top: 10px;
         }
         button, input[type="file"] {
             background-color: black;
@@ -76,6 +72,10 @@
         button:hover, input[type="file"]:hover {
             opacity: 1;
         }
+        canvas {
+            width: 100% !important;
+            height: 100px !important; /* Fixed height for visual consistency */
+        }
     </style>
 </head>
 <body>
@@ -87,59 +87,68 @@
         </div>
         <div class="videos">
             <div class="video" id="outboundAnimation">
-                <input type="file" id="outboundFile" accept="audio/*">
+                <div id="outboundCanvas"></div>
                 <div class="controls">
-                    <button onclick="togglePlay('outbound')">Play</button>
-                    <button onclick="togglePlay('outbound', true)">Pause</button>
+                    <button onclick="togglePlay(outboundSound, outboundCanvas)">Play</button>
+                    <button onclick="pauseAudio(outboundSound)">Pause</button>
                 </div>
             </div>
             <div class="video" id="inboundAnimation">
-                <input type="file" id="inboundFile" accept="audio/*">
+                <div id="inboundCanvas"></div>
                 <div class="controls">
-                    <button onclick="togglePlay('inbound')">Play</button>
-                    <button onclick="togglePlay('inbound', true)">Pause</button>
+                    <button onclick="togglePlay(inboundSound, inboundCanvas)">Play</button>
+                    <button onclick="pauseAudio(inboundSound)">Pause</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let outboundAudio, inboundAudio;
+        let outboundSound, inboundSound;
+
+        function preload() {
+            // Preload a sample audio file
+            outboundSound = loadSound('https://example.com/path/to/your/sample.mp3');
+            inboundSound = loadSound('https://example.com/path/to/your/sample.mp3');
+        }
 
         function setup() {
-            let outboundCanvas = createCanvas(640, 200).parent('outboundAnimation');
-            let outboundAnalyzer = new p5.Amplitude();
-            setupAudio('outboundFile', outboundAnalyzer, outboundCanvas, 'outbound');
-
-            let inboundCanvas = createCanvas(640, 200).parent('inboundAnimation');
-            let inboundAnalyzer = new p5.Amplitude();
-            setupAudio('inboundFile', inboundAnalyzer, inboundCanvas, 'inbound');
+            let outboundCanvas = createCanvas(640, 100).parent('outboundCanvas');
+            let inboundCanvas = createCanvas(640, 100).parent('inboundCanvas');
         }
 
-        function setupAudio(fileInputId, analyzer, canvas, id) {
-            const fileInput = document.getElementById(fileInputId);
-            fileInput.addEventListener('change', function(e) {
-                if (this.files && this.files[0]) {
-                    let audio = new p5.SoundFile(this.files[0], () => {
-                        analyzer.setInput(audio);
-                        if (id === 'outbound') {
-                            outboundAudio = audio;
-                        } else if (id === 'inbound') {
-                            inboundAudio = audio;
-                        }
-                    });
+        function draw() {
+            background(0);
+            drawWaveform(outboundSound, outboundCanvas);
+            drawWaveform(inboundSound, inboundCanvas);
+        }
+
+        function drawWaveform(sound, canvas) {
+            if (sound.isPlaying()) {
+                let waveform = sound.getPeaks();
+                canvas.noFill();
+                canvas.beginShape();
+                for (let i = 0; i < waveform.length; i++){
+                    let x = map(i, 0, waveform.length, 0, width);
+                    let y = map(waveform[i], -1, 1, height, 0);
+                    canvas.vertex(x, y);
                 }
-            });
+                canvas.endShape();
+            }
         }
 
-        function togglePlay(id, pause = false) {
-            let audio = (id === 'outbound') ? outboundAudio : inboundAudio;
-            if (!audio) return;
-
-            if (pause) {
-                if (audio.isPlaying()) audio.pause();
+        function togglePlay(sound, canvas) {
+            if (sound.isPlaying()) {
+                sound.pause();
             } else {
-                if (!audio.isPlaying()) audio.loop();
+                sound.loop();
+                drawWaveform(sound, canvas);
+            }
+        }
+
+        function pauseAudio(sound) {
+            if (sound.isPlaying()) {
+                sound.pause();
             }
         }
     </script>
