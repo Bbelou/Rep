@@ -50,16 +50,19 @@
             color: white;
             position: relative; /* for positioning labels and controls */
         }
-        .video label {
+        .video label, .video button {
             position: absolute;
             bottom: 10px;
-            left: 10px;
             color: white;
+        }
+        .video button {
+            right: 10px;
+            opacity: 0.9;
         }
         input[type="file"] {
             position: absolute;
             bottom: 10px;
-            right: 10px;
+            left: 10px;
             opacity: 0.7;
         }
         button {
@@ -68,7 +71,6 @@
             border: none;
             padding: 10px 20px;
             cursor: pointer;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -83,40 +85,61 @@
             <div class="video" id="outboundAnimation">
                 <label>Outbound AI Agent Conversation</label>
                 <input type="file" id="outboundFile" accept="audio/*">
+                <button onclick="togglePlay('outbound')">Play/Pause</button>
             </div>
             <div class="video" id="inboundAnimation">
                 <label>Inbound AI Agent Conversation</label>
                 <input type="file" id="inboundFile" accept="audio/*">
+                <button onclick="togglePlay('inbound')">Play/Pause</button>
             </div>
         </div>
     </div>
 
     <script>
         let outboundAnalyzer, inboundAnalyzer;
+        let outboundAudio, inboundAudio;
 
         function setup() {
-            let outboundCanvas = createCanvas(240, 200).parent('outboundAnimation');
+            createCanvas(240, 200).parent('outboundAnimation');
             outboundAnalyzer = new p5.Amplitude();
-            setupAudio('outboundFile', outboundAnalyzer, outboundCanvas);
+            setupAudio('outboundFile', outboundAnalyzer, 'outbound');
 
-            let inboundCanvas = createCanvas(240, 200).parent('inboundAnimation');
+            createCanvas(240, 200).parent('inboundAnimation');
             inboundAnalyzer = new p5.Amplitude();
-            setupAudio('inboundFile', inboundAnalyzer, inboundCanvas);
+            setupAudio('inboundFile', inboundAnalyzer, 'inbound');
         }
 
-        function setupAudio(fileInputId, analyzer, canvas) {
+        function setupAudio(fileInputId, analyzer, id) {
             const fileInput = document.getElementById(fileInputId);
             fileInput.addEventListener('change', function(e) {
                 if (this.files && this.files[0]) {
                     let audio = new p5.SoundFile(this.files[0], () => {
-                        audio.loop();
+                        analyzer.setInput(audio);
                     });
-                    analyzer.setInput(audio);
-                    drawVisualization(analyzer, canvas);
+                    if (id === 'outbound') {
+                        outboundAudio = audio;
+                    } else if (id === 'inbound') {
+                        inboundAudio = audio;
+                    }
                 }
             });
         }
 
-        function drawVisualization(analyzer, canvas) {
-            canvas.draw = function() {
-               
+        function togglePlay(id) {
+            if (id === 'outbound' && outboundAudio) {
+                if (outboundAudio.isPlaying()) {
+                    outboundAudio.pause();
+                } else {
+                    outboundAudio.loop();
+                }
+            } else if (id === 'inbound' && inboundAudio) {
+                if (inboundAudio.isPlaying()) {
+                    inboundAudio.pause();
+                } else {
+                    inboundAudio.loop();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
